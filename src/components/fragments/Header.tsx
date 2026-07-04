@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Badge } from "../ui/badge";
 
 export function Header() {
   return (
@@ -28,8 +27,6 @@ export function Header() {
           About
         </Link>
       </nav> */}
-
-      <Badge variant="outline">por @1manuelc</Badge>
     </header>
   );
 }
