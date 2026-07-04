@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Triangle } from "ogl";
+import gsap from "gsap";
 
 interface GrainientProps {
   timeSpeed?: number;
@@ -165,6 +166,7 @@ const Grainient: React.FC<GrainientProps> = ({
   className = "",
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   // Effect 1: build WebGL context once, pause when offscreen / tab hidden
   useEffect(() => {
@@ -274,6 +276,10 @@ const Grainient: React.FC<GrainientProps> = ({
 
     tryStart();
 
+    if (wrapperRef.current) {
+      gsap.to(wrapperRef.current, { opacity: 1, duration: 3, ease: "power2.inOut" });
+    }
+
     return () => {
       tryStop();
       ro.disconnect();
@@ -345,9 +351,12 @@ const Grainient: React.FC<GrainientProps> = ({
 
   return (
     <div
-      ref={containerRef}
+      ref={wrapperRef}
       className={`relative h-full w-full overflow-hidden ${className}`.trim()}
-    />
+      style={{ opacity: 0 }}
+    >
+      <div ref={containerRef} className="absolute inset-0" />
+    </div>
   );
 };
 
