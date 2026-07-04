@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-spacegrotesk",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const geist = Geist({
+  variable: "--font-geist",
 });
 
 export const metadata: Metadata = {
@@ -21,11 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="pt_br"
-      className={`${spaceGrotesk.className} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="pt_br" className={`${geist.className} h-full antialiased dark`}>
+      <body className="max-w-dvw min-h-dvh flex flex-col">{children}</body>
     </html>
   );
 }
