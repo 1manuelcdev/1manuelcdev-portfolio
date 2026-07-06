@@ -140,6 +140,7 @@ export function ExperienceCard({ experiences: initial }: Props) {
   const [open, setOpen] = useState(false);
 
   const { register, handleSubmit, reset, control, watch, setValue, formState: { errors } } = useForm<ExperienceInput>({
+    // @ts-expect-error zodResolver has incompatible types between @hookform/resolvers v5 and zod@3.25 — works at runtime
     resolver: zodResolver(experienceSchema),
     defaultValues: {
       title: "",
