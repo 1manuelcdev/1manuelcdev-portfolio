@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -43,17 +45,6 @@ import type { Experience } from "@/lib/supabase/services/experience";
 
 type Props = {
   experiences: Experience[];
-};
-
-const emptyExp: ExperienceInput = {
-  title: "",
-  company: "",
-  location: "",
-  description: "",
-  from_date: "",
-  to_date: null,
-  is_current: false,
-  sort_order: 0,
 };
 
 function toDisplayDate(iso: string | null): string {
@@ -144,12 +135,25 @@ function SortableItem({
 
 export function ExperienceCard({ experiences: initial }: Props) {
   const [experiences, setExperiences] = useState(initial);
-  const [editing, setEditing] = useState<ExperienceInput & { id?: string }>(emptyExp);
-  const [fromDisplay, setFromDisplay] = useState("");
-  const [toDisplay, setToDisplay] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+
+  const { register, handleSubmit, reset, control, watch, setValue, formState: { errors } } = useForm<ExperienceInput>({
+    resolver: zodResolver(experienceSchema),
+    defaultValues: {
+      title: "",
+      company: "",
+      location: "",
+      description: "",
+      from_date: "",
+      to_date: null,
+      is_current: false,
+      sort_order: 0,
+    },
+  });
+
+  const watchIsCurrent = watch("is_current");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -157,54 +161,57 @@ export function ExperienceCard({ experiences: initial }: Props) {
   );
 
   function handleAdd() {
-    setEditing({ ...emptyExp, sort_order: experiences.length });
-    setFromDisplay("");
-    setToDisplay("");
-    setErrors({});
+    setEditingId(null);
+    reset({
+      title: "",
+      company: "",
+      location: "",
+      description: "",
+      from_date: "",
+      to_date: null,
+      is_current: false,
+      sort_order: experiences.length,
+    });
     setOpen(true);
   }
 
   function handleEdit(e: Experience) {
-    setEditing(e);
-    setFromDisplay(toDisplayDate(e.from_date));
-    setToDisplay(toDisplayDate(e.to_date));
-    setErrors({});
+    setEditingId(e.id);
+    reset({
+      title: e.title,
+      company: e.company,
+      location: e.location,
+      description: e.description,
+      from_date: toDisplayDate(e.from_date),
+      to_date: toDisplayDate(e.to_date),
+      is_current: e.is_current,
+      sort_order: e.sort_order,
+    });
     setOpen(true);
   }
 
-  function handleSave() {
-    const result = experienceSchema.safeParse({
-      title: editing.title,
-      company: editing.company,
-      location: editing.location,
-      description: editing.description,
-      from_date: toIsoDate(fromDisplay) ?? "",
-      to_date: editing.is_current ? null : toIsoDate(toDisplay),
-      is_current: editing.is_current,
-      sort_order: editing.sort_order,
-    });
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
-      for (const issue of result.error.issues) {
-        const key = issue.path[0] as string;
-        if (!fieldErrors[key]) {
-          fieldErrors[key] = issue.message;
-        }
-      }
-      setErrors(fieldErrors);
-      return;
-    }
-    setErrors({});
+  function onSubmit(data: ExperienceInput) {
+    const payload = {
+      title: data.title,
+      company: data.company,
+      location: data.location,
+      description: data.description ?? "",
+      from_date: toIsoDate(data.from_date) ?? "",
+      to_date: data.is_current ? null : toIsoDate(data.to_date ?? ""),
+      is_current: data.is_current ?? false,
+      sort_order: data.sort_order ?? 0,
+    };
+
     startTransition(async () => {
       const toastId = toast.loading("Salvando...");
       try {
-        if (editing.id) {
-          await editExperience(editing.id, result.data);
+        if (editingId) {
+          await editExperience(editingId, payload);
           setExperiences((prev) =>
-            prev.map((e) => (e.id === editing.id ? { ...e, ...result.data } : e)),
+            prev.map((e) => (e.id === editingId ? { ...e, ...payload } : e)),
           );
         } else {
-          const created = await addExperience(result.data);
+          const created = await addExperience(payload);
           setExperiences((prev) => [...prev, created]);
         }
         toast.success("Salvo com sucesso!", { id: toastId });
@@ -266,100 +273,87 @@ export function ExperienceCard({ experiences: initial }: Props) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>{editing.id ? "Editar Experiência" : "Nova Experiência"}</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Experiência" : "Nova Experiência"}</DialogTitle>
             </DialogHeader>
-            <div className="flex flex-col gap-3">
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
               <div className="grid gap-2">
                 <Label>Título / Cargo *</Label>
                 <Input
-                  value={editing.title}
-                  onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
+                  {...register("title")}
                   aria-invalid={!!errors.title}
                 />
-                {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
+                {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label>Empresa *</Label>
                 <Input
-                  value={editing.company}
-                  onChange={(e) => setEditing((prev) => ({ ...prev, company: e.target.value }))}
+                  {...register("company")}
                   aria-invalid={!!errors.company}
                 />
-                {errors.company && <p className="text-xs text-destructive">{errors.company}</p>}
+                {errors.company && <p className="text-xs text-destructive">{errors.company.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label>Localização *</Label>
                 <Input
-                  value={editing.location}
-                  onChange={(e) =>
-                    setEditing((prev) => ({
-                      ...prev,
-                      location: e.target.value,
-                    }))
-                  }
+                  {...register("location")}
                   aria-invalid={!!errors.location}
                 />
-                {errors.location && <p className="text-xs text-destructive">{errors.location}</p>}
+                {errors.location && <p className="text-xs text-destructive">{errors.location.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label>Descrição</Label>
-                <Textarea
-                  value={editing.description}
-                  onChange={(e) =>
-                    setEditing((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                />
+                <Textarea {...register("description")} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-2">
                   <Label>Data início *</Label>
                   <Input
                     placeholder="dd/mm/aaaa"
-                    value={fromDisplay}
-                    onChange={(e) => setFromDisplay(e.target.value)}
+                    {...register("from_date")}
                     aria-invalid={!!errors.from_date}
                   />
                   {errors.from_date && (
-                    <p className="text-xs text-destructive">{errors.from_date}</p>
+                    <p className="text-xs text-destructive">{errors.from_date.message}</p>
                   )}
                 </div>
                 <div className="grid gap-2">
                   <Label>Data fim</Label>
                   <Input
                     placeholder="dd/mm/aaaa"
-                    value={toDisplay}
-                    disabled={editing.is_current}
-                    onChange={(e) => setToDisplay(e.target.value)}
+                    disabled={watchIsCurrent}
+                    {...register("to_date")}
                     aria-invalid={!!errors.to_date}
                   />
-                  {errors.to_date && <p className="text-xs text-destructive">{errors.to_date}</p>}
+                  {errors.to_date && <p className="text-xs text-destructive">{errors.to_date.message}</p>}
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <Label>Emprego atual</Label>
-                <Switch
-                  checked={editing.is_current}
-                  onCheckedChange={(checked) =>
-                    setEditing((prev) => ({
-                      ...prev,
-                      is_current: checked,
-                      to_date: checked ? null : prev.to_date,
-                    }))
-                  }
+                <Controller
+                  control={control}
+                  name="is_current"
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (checked) {
+                          setValue("to_date", null, { shouldValidate: true });
+                        }
+                      }}
+                    />
+                  )}
                 />
               </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancelar</Button>
-              </DialogClose>
-              <Button onClick={handleSave} disabled={isPending}>
-                {isPending ? "Salvando..." : "Salvar"}
-              </Button>
-            </DialogFooter>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">Cancelar</Button>
+                </DialogClose>
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </CardHeader>

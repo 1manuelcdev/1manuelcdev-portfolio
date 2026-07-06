@@ -8,7 +8,7 @@ export const heroSchema = z.object({
   instagram_url: z.string().url("URL inválida").or(z.literal("")),
 });
 
-export type HeroInput = z.infer<typeof heroSchema>;
+export type HeroInput = z.input<typeof heroSchema>;
 
 export const projectSchema = z.object({
   title: z.string().min(1, "Título é obrigatório"),
@@ -19,7 +19,7 @@ export const projectSchema = z.object({
   sort_order: z.number().int().min(0).default(0),
 });
 
-export type ProjectInput = z.infer<typeof projectSchema>;
+export type ProjectInput = z.input<typeof projectSchema>;
 
 export const experienceSchema = z.object({
   title: z.string().min(1, "Título é obrigatório"),
@@ -38,4 +38,4 @@ export const experienceSchema = z.object({
   { message: "Data de início deve ser anterior à data de fim", path: ["from_date"] },
 );
 
-export type ExperienceInput = z.infer<typeof experienceSchema>;
+export type ExperienceInput = z.input<typeof experienceSchema>;
