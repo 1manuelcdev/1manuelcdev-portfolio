@@ -18,7 +18,6 @@ type Props = {
 
 export function HeroCard({ content }: Props) {
   const { register, handleSubmit, formState: { errors, isDirty } } = useForm<HeroInput>({
-    // @ts-expect-error zodResolver has incompatible types between @hookform/resolvers v5 and zod@3.25 — works at runtime
     resolver: zodResolver(heroSchema),
     defaultValues: {
       title: content?.title ?? "",

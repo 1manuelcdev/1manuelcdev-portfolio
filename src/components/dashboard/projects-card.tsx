@@ -42,7 +42,6 @@ export function ProjectsCard({ projects: initial }: Props) {
   const [open, setOpen] = useState(false);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProjectInput>({
-    // @ts-expect-error zodResolver has incompatible types between @hookform/resolvers v5 and zod@3.25 — works at runtime
     resolver: zodResolver(projectSchema),
     defaultValues: emptyProject,
   });
