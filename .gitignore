@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# mimocode
+.mimocode/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

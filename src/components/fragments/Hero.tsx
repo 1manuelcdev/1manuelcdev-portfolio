@@ -1,37 +1,27 @@
 import { HeroContent } from "@/components/fragments/HeroContent";
-import Grainient from "@/components/Grainient";
+import Image from "next/image";
+import type { HeroContent as HeroContentType } from "@/lib/supabase/services/hero";
 
-export function Hero() {
+type Props = {
+  content: HeroContentType;
+};
+
+export function Hero({ content }: Props) {
   return (
-    <div className="h-dvh relative flex flex-col items-center gap-12 justify-center">
-      <div className="-z-1 absolute inset-0">
-        <Grainient
-          color1="#0f3362"
-          color2="#060811"
-          color3="#2d5cbf"
-          timeSpeed={0.35}
-          colorBalance={0}
-          warpStrength={1}
-          warpFrequency={4.7}
-          warpSpeed={0.1}
-          warpAmplitude={50}
-          blendAngle={-180}
-          blendSoftness={0.05}
-          rotationAmount={500}
-          noiseScale={2.15}
-          grainAmount={0.1}
-          grainScale={2}
-          grainAnimated={false}
-          contrast={1.5}
-          gamma={1}
-          saturation={1}
-          centerX={0}
-          centerY={0}
-          zoom={0.8}
-        />
+    <div className="h-170 relative flex flex-col items-center gap-12 justify-center">
+      <Image
+        className="-z-1 h-full absolute object-cover object-center-left animate-fade-in"
+        alt="background hero image"
+        height={1080}
+        width={1920}
+        loading="eager"
+        src={
+          "https://eefsvvxawvjdzjdhcbuf.supabase.co/storage/v1/object/public/1manuelcdev-portfolio-media/hero-image.jpg"
+        }
+      />
+      <div className="animate-fade-in-delay">
+        <HeroContent content={content} />
       </div>
-
-      <HeroContent />
     </div>
   );
 }
