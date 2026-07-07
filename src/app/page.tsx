@@ -11,6 +11,8 @@ import { getProjects } from "@/lib/supabase/services/projects";
 import { getExperiences } from "@/lib/supabase/services/experience";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 async function HeroSection() {
   const supabase = await createClient();
   const content = await getHeroContent(supabase);
