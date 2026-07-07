@@ -14,7 +14,9 @@ export default function Page() {
         height={1080}
         width={1920}
         loading="eager"
-        src={"/frame.jpg"}
+        src={
+          "https://eefsvvxawvjdzjdhcbuf.supabase.co/storage/v1/object/public/1manuelcdev-portfolio-media/hero-image.jpg"
+        }
       />
     </div>
   );
