@@ -1,9 +1,27 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,14 +35,71 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import { PlusIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, PencilIcon, TrashIcon, XIcon, GripVerticalIcon } from "lucide-react";
 import { addProject, editProject, removeProject } from "@/app/dashboard/actions";
 import { projectSchema, type ProjectInput } from "@/lib/schemas/dashboard";
 import type { Project } from "@/lib/supabase/services/projects";
+import { useSupabaseUpload } from "@/hooks/use-supabase-upload";
+import { Dropzone, DropzoneEmptyState } from "@/components/dropzone";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 type Props = {
   projects: Project[];
 };
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function SortableBadge({
+  tech,
+  onRemove,
+}: {
+  tech: string;
+  onRemove: (tag: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: tech,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Badge
+      ref={setNodeRef}
+      style={style}
+      variant="secondary"
+      className="gap-1 h-6 text-sm px-2.5 py-1 cursor-grab"
+      {...attributes}
+      {...listeners}
+    >
+      <GripVerticalIcon className="size-3 text-muted-foreground" />
+      {tech}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove(tech);
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
+      >
+        <XIcon className="size-3" />
+      </button>
+    </Badge>
+  );
+}
 
 const emptyProject: ProjectInput = {
   title: "",
@@ -40,17 +115,89 @@ export function ProjectsCard({ projects: initial }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProjectInput>({
     resolver: zodResolver(projectSchema),
     defaultValues: emptyProject,
   });
 
-  const watchStack = watch("stack");
+  const watchStack = watch("stack") ?? [];
+  const watchTitle = watch("title") ?? "";
+  const watchCoverUrl = watch("cover_url");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const uploadProps = useSupabaseUpload({
+    bucketName: "1manuelcdev-portfolio-media",
+    path: "projects",
+    allowedMimeTypes: ["image/*"],
+    maxFiles: 1,
+    maxFileSize: 5 * 1024 * 1024,
+    upsert: true,
+  });
+
+  async function handleUpload() {
+    const file = uploadProps.files[0];
+    if (!file || uploadProps.loading) return;
+
+    const slug = slugify(watchTitle) || "untitled";
+    const ext = file.name.split(".").pop() || "jpg";
+    const fileName = `${slug}-cover.${ext}`;
+
+    const renamedFile = new File([file], fileName, { type: file.type });
+
+    const { error } = await supabase.storage
+      .from("1manuelcdev-portfolio-media")
+      .upload(`projects/${fileName}`, renamedFile, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (!error) {
+      const { data: urlData } = supabase.storage
+        .from("1manuelcdev-portfolio-media")
+        .getPublicUrl(`projects/${fileName}`);
+
+      setValue("cover_url", urlData.publicUrl, { shouldValidate: true });
+      uploadProps.setFiles([]);
+    }
+  }
+
+  useEffect(() => {
+    if (uploadProps.files.length > 0 && !uploadProps.loading) {
+      handleUpload();
+    }
+  }, [uploadProps.files.length]);
+
+  function commitTag() {
+    const tag = inputValue.trim();
+    if (tag && !watchStack.includes(tag)) {
+      setValue("stack", [...watchStack, tag], { shouldValidate: true });
+    }
+    setInputValue("");
+  }
+
+  function removeTag(tag: string) {
+    setValue("stack", watchStack.filter((t) => t !== tag), { shouldValidate: true });
+  }
+
+  function handleStackDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = watchStack.indexOf(active.id as string);
+    const newIndex = watchStack.indexOf(over.id as string);
+    setValue("stack", arrayMove(watchStack, oldIndex, newIndex), { shouldValidate: true });
+  }
 
   function handleAdd() {
     setEditingId(null);
     reset({ ...emptyProject, sort_order: projects.length });
+    setInputValue("");
+    uploadProps.setFiles([]);
     setOpen(true);
   }
 
@@ -64,6 +211,8 @@ export function ProjectsCard({ projects: initial }: Props) {
       stack: p.stack,
       sort_order: p.sort_order,
     });
+    setInputValue("");
+    uploadProps.setFiles([]);
     setOpen(true);
   }
 
@@ -108,7 +257,7 @@ export function ProjectsCard({ projects: initial }: Props) {
               Adicionar
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingId ? "Editar Projeto" : "Novo Projeto"}
@@ -128,12 +277,51 @@ export function ProjectsCard({ projects: initial }: Props) {
                 <Textarea {...register("description")} />
               </div>
               <div className="grid gap-2">
-                <Label>URL da imagem</Label>
-                <Input
-                  {...register("cover_url", { setValueAs: (v) => v || null })}
-                  aria-invalid={!!errors.cover_url}
-                />
-                {errors.cover_url && <p className="text-xs text-destructive">{errors.cover_url.message}</p>}
+                <Label>Capa do projeto</Label>
+                {uploadProps.files.length > 0 && !uploadProps.isSuccess ? (
+                  <>
+                    <div className="relative">
+                      <img
+                        src={uploadProps.files[0].preview}
+                        alt="Preview"
+                        className="w-full h-32 object-cover rounded-md border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1"
+                        onClick={() => uploadProps.setFiles([])}
+                      >
+                        <XIcon className="size-3" />
+                      </Button>
+                    </div>
+                    {uploadProps.loading && (
+                      <p className="text-xs text-muted-foreground">Enviando...</p>
+                    )}
+                  </>
+                ) : watchCoverUrl ? (
+                  <div className="relative group">
+                    <img
+                      src={watchCoverUrl}
+                      alt="Capa"
+                      className="w-full h-32 object-cover rounded-md border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setValue("cover_url", null, { shouldValidate: true })}
+                    >
+                      <XIcon className="size-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Dropzone {...uploadProps}>
+                    <DropzoneEmptyState />
+                  </Dropzone>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label>URL do projeto</Label>
@@ -146,11 +334,30 @@ export function ProjectsCard({ projects: initial }: Props) {
               <div className="grid gap-2">
                 <Label>Stack (separado por vírgula)</Label>
                 <Input
-                  value={watchStack?.join(", ") ?? ""}
-                  onChange={(e) =>
-                    setValue("stack", e.target.value.split(",").map((s) => s.trim()).filter(Boolean), { shouldValidate: true })
-                  }
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === ",") {
+                      e.preventDefault();
+                      commitTag();
+                    } else if (e.key === "Backspace" && inputValue === "" && watchStack.length > 0) {
+                      removeTag(watchStack[watchStack.length - 1]);
+                    }
+                  }}
+                  onBlur={commitTag}
+                  placeholder="Digite e pressione vírgula"
                 />
+                {watchStack.length > 0 && (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleStackDragEnd}>
+                    <SortableContext items={watchStack} strategy={horizontalListSortingStrategy}>
+                      <div className="flex flex-wrap gap-1">
+                        {watchStack.map((tech) => (
+                          <SortableBadge key={tech} tech={tech} onRemove={removeTag} />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label>Ordem</Label>
