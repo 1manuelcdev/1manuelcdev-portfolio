@@ -98,8 +98,8 @@ export default function BioPage() {
         <div className="w-full">
           {contentLinks.map((contentLink) => (
             <Link key={contentLink.id} className="w-full hover:cursor-pointer" href="/">
-              <Card className="w-full max-h-18 md:max-h-28 flex flex-row justify-center items-center secondary-border hover:bg-muted transition-colors">
-                <CardHeader className="pl-0 flex flex-row w-full items-center justify-center gap-4">
+              <Card className="w-full max-h-fit md:max-h-28 flex flex-row justify-center items-center secondary-border hover:bg-muted transition-colors">
+                <CardHeader className="pl-4 flex flex-row w-full items-center justify-center gap-4">
                   {contentLink.icon}
                   <div className="flex flex-col gap-1">
                     <CardTitle>{contentLink.title}</CardTitle>
