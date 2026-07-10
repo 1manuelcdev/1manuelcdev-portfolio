@@ -22,16 +22,9 @@ export async function getProjects(client?: SupabaseClient) {
   return data as Project[];
 }
 
-export async function createProject(
-  project: Omit<Project, "id">,
-  client?: SupabaseClient,
-) {
+export async function createProject(project: Omit<Project, "id">, client?: SupabaseClient) {
   const supabase = client ?? createBrowserClient();
-  const { data, error } = await supabase
-    .from("projects")
-    .insert(project)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("projects").insert(project).select().single();
   if (error) throw error;
   return data;
 }
