@@ -117,12 +117,16 @@ function SortableItem({
       </div>
       <div className="flex items-center gap-2 text-xs text-muted-foreground pl-6">
         <span>
-          {format(parse(experience.from_date, "yyyy-MM-dd", new Date()), "MMM, yyyy", { locale: ptBR })}
+          {format(parse(experience.from_date, "yyyy-MM-dd", new Date()), "MMM, yyyy", {
+            locale: ptBR,
+          })}
           {" – "}
           {experience.is_current
             ? "Presente"
             : experience.to_date
-              ? format(parse(experience.to_date, "yyyy-MM-dd", new Date()), "MMM, yyyy", { locale: ptBR })
+              ? format(parse(experience.to_date, "yyyy-MM-dd", new Date()), "MMM, yyyy", {
+                  locale: ptBR,
+                })
               : ""}
         </span>
       </div>
@@ -139,7 +143,15 @@ export function ExperienceCard({ experiences: initial }: Props) {
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
-  const { register, handleSubmit, reset, control, watch, setValue, formState: { errors } } = useForm<ExperienceInput>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<ExperienceInput>({
     resolver: zodResolver(experienceSchema),
     defaultValues: {
       title: "",
@@ -249,9 +261,7 @@ export function ExperienceCard({ experiences: initial }: Props) {
 
     startTransition(async () => {
       try {
-        await Promise.all(
-          reordered.map((e, i) => editExperience(e.id, { sort_order: i })),
-        );
+        await Promise.all(reordered.map((e, i) => editExperience(e.id, { sort_order: i })));
         toast.success("Ordem atualizada!", { id: toastId });
       } catch {
         setExperiences(experiences);
@@ -278,27 +288,22 @@ export function ExperienceCard({ experiences: initial }: Props) {
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
               <div className="grid gap-2">
                 <Label>Título / Cargo *</Label>
-                <Input
-                  {...register("title")}
-                  aria-invalid={!!errors.title}
-                />
+                <Input {...register("title")} aria-invalid={!!errors.title} />
                 {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label>Empresa *</Label>
-                <Input
-                  {...register("company")}
-                  aria-invalid={!!errors.company}
-                />
-                {errors.company && <p className="text-xs text-destructive">{errors.company.message}</p>}
+                <Input {...register("company")} aria-invalid={!!errors.company} />
+                {errors.company && (
+                  <p className="text-xs text-destructive">{errors.company.message}</p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label>Localização *</Label>
-                <Input
-                  {...register("location")}
-                  aria-invalid={!!errors.location}
-                />
-                {errors.location && <p className="text-xs text-destructive">{errors.location.message}</p>}
+                <Input {...register("location")} aria-invalid={!!errors.location} />
+                {errors.location && (
+                  <p className="text-xs text-destructive">{errors.location.message}</p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label>Descrição</Label>
@@ -324,7 +329,9 @@ export function ExperienceCard({ experiences: initial }: Props) {
                     {...register("to_date")}
                     aria-invalid={!!errors.to_date}
                   />
-                  {errors.to_date && <p className="text-xs text-destructive">{errors.to_date.message}</p>}
+                  {errors.to_date && (
+                    <p className="text-xs text-destructive">{errors.to_date.message}</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -347,7 +354,9 @@ export function ExperienceCard({ experiences: initial }: Props) {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="outline" type="button">Cancelar</Button>
+                  <Button variant="outline" type="button">
+                    Cancelar
+                  </Button>
                 </DialogClose>
                 <Button type="submit" disabled={isPending}>
                   {isPending ? "Salvando..." : "Salvar"}
@@ -359,7 +368,10 @@ export function ExperienceCard({ experiences: initial }: Props) {
       </CardHeader>
       <CardContent>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={experiences.map((e) => e.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={experiences.map((e) => e.id)}
+            strategy={verticalListSortingStrategy}
+          >
             <div className="flex flex-col gap-3">
               {experiences.length === 0 && (
                 <p className="text-sm text-muted-foreground">Nenhuma experiência cadastrada.</p>
