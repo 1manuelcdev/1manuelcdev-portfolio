@@ -35,7 +35,7 @@ export function ProjectsSection({ projects }: Props) {
           const image = proj.cover_url || "/frame.jpg";
           return (
             <Card key={proj.id} className="h-full max-w-80 hover:bg-muted/50 transition-colors">
-              <Link href={proj.project_url || "#"}>
+              <Link href={proj.project_url || "#"} target="_blank">
                 <CardContent className="text-muted-foreground mb-4">
                   <Image
                     className="w-full max-h-45 object-cover rounded-md"
