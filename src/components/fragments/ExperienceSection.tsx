@@ -17,7 +17,7 @@ export function ExperienceSection({ experiences }: Props) {
   return (
     <div
       id="experience-section"
-      className="p-4 pt-6 md:p-8 md:pt-12 flex flex-col items-center justify-center gap-1"
+      className="px-5 py-10 flex flex-col items-center justify-center gap-1 border-t border-input/70"
     >
       <div id="experience-title" className="flex flex-col items-center justify-center gap-1">
         <span className="text-xl font-semibold">Experiência profissional</span>
@@ -26,28 +26,24 @@ export function ExperienceSection({ experiences }: Props) {
 
       <div
         id="experience-content"
-        className="mt-6 w-full flex flex-col items-center justify-center"
+        className="mt-6 max-w-2xl flex flex-col gap-5 items-center justify-center"
       >
-        {experiences.map((exp, i) => {
-          return (
-            <div key={exp.id} className="my-2 w-full max-w-3xl flex flex-col items-center">
-              <Card className="w-full bg-transparent border-none ring-transparent overflow-visible">
-                <CardHeader>
-                  <CardTitle>{exp.title}</CardTitle>
-                  <CardDescription>
-                    {exp.company} - {exp.location}
-                  </CardDescription>
-                  <CardAction>
-                    {formatExperienceDate(exp.from_date)} –{" "}
-                    {exp.is_current ? "Presente" : exp.to_date && formatExperienceDate(exp.to_date)}
-                  </CardAction>
-                </CardHeader>
-                <CardContent className="text-muted-foreground">{exp.description}</CardContent>
-              </Card>
-              {i < experiences.length - 1 && <Separator className="w-full max-w-3xl h-px" />}
-            </div>
-          );
-        })}
+        {experiences.map((exp) => (
+          <Card key={exp.id} className="w-full ring-transparent overflow-visible">
+            <CardHeader>
+              <CardTitle>{exp.title}</CardTitle>
+              <CardDescription>
+                {exp.company} - {exp.location}
+              </CardDescription>
+              <CardAction>
+                {formatExperienceDate(exp.from_date)} –{" "}
+                {exp.is_current ? "Presente" : exp.to_date && formatExperienceDate(exp.to_date)}
+              </CardAction>
+            </CardHeader>
+            <Separator className="border" />
+            <CardContent className="text-muted-foreground">{exp.description}</CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );

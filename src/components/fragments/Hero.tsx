@@ -1,6 +1,6 @@
 import { HeroContent } from "@/components/fragments/HeroContent";
-import Image from "next/image";
 import type { HeroContent as HeroContentType } from "@/lib/supabase/services/hero";
+import { ChevronDown } from "lucide-react";
 
 type Props = {
   content: HeroContentType;
@@ -8,20 +8,20 @@ type Props = {
 
 export function Hero({ content }: Props) {
   return (
-    <div className="h-170 relative flex flex-col items-center gap-12 justify-center">
-      <Image
-        className="-z-1 h-full absolute object-cover object-center-left animate-fade-in"
-        alt="background hero image"
-        height={1080}
-        width={1920}
-        loading="eager"
-        src={
-          "https://eefsvvxawvjdzjdhcbuf.supabase.co/storage/v1/object/public/1manuelcdev-portfolio-media/hero-image.jpg"
-        }
-      />
+    <div
+      className="h-dvh relative px-5 flex flex-col items-center gap-12 justify-center"
+      style={{
+        backgroundImage:
+          "url('https://eefsvvxawvjdzjdhcbuf.supabase.co/storage/v1/object/public/1manuelcdev-portfolio-media/hero-v3.png')",
+        objectFit: "cover",
+        objectPosition: "center",
+      }}
+    >
       <div className="animate-fade-in-delay">
         <HeroContent content={content} />
       </div>
+
+      <ChevronDown className="absolute right-10 bottom-10 size-7 text-accent animate-pulse" />
     </div>
   );
 }

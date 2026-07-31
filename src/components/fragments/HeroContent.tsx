@@ -6,17 +6,18 @@ type Props = {
   content: HeroContentType;
 };
 
-export function HeroContent({ content }: Props) {
+export function   HeroContent({ content }: Props) {
   return (
-    <div className="w-full max-w-sm md:max-w-4xl px-4 flex flex-col items-start justify-start gap-4">
+    <div className="flex flex-col gap-12">
       <div className="flex flex-col items-start gap-2 md:gap-4">
-        <h1 className="text-2xl md:text-5xl">{content.title}</h1>
-        <h2 className="font-normal text-zinc-300 text-sm md:text-lg">
+        <span>Fullstack Developer · Ceará, Brasil</span>
+        <h1 className="tracking-tighter font-semibold text-4xl md:text-6xl">{content.title}</h1>
+        <h2 className="max-w-xl font-normal text-zinc-300 text-sm md:text-lg">
           {content.description}
         </h2>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-6">
         <Link
           href={content.github_url}
           target="_blank"

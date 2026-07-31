@@ -8,12 +8,10 @@ type Props = {
 
 export function Footer({ content }: Props) {
   return (
-    <footer className="mt-auto border-t border-border/50">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 md:flex-row md:items-center md:justify-between">
+    <footer className="mt-12 border-t border-input/70">
+      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-8 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium">
-            {content?.title ?? "1manuelcdev"}
-          </span>
+          <span className="text-sm font-medium">{content?.title ?? "1manuelcdev"}</span>
           <span className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} 1manuelcdev
           </span>

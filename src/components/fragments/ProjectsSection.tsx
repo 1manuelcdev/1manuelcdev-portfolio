@@ -12,7 +12,7 @@ export function ProjectsSection({ projects }: Props) {
   return (
     <div
       id="projects-section"
-      className="p-4 pt-6 md:p-8 md:pt-12 flex flex-col items-center justify-center gap-1"
+      className="px-5 py-10 border-t border-input/70 flex flex-col items-center justify-center gap-1"
     >
       <div id="projects-title" className="flex flex-col items-center justify-center gap-1">
         <span className="text-xl font-semibold">Projetos pessoais</span>
