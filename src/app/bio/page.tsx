@@ -56,11 +56,11 @@ export default function BioPage() {
       id="bio-container"
       style={{
         backgroundImage:
-          "url('https://eefsvvxawvjdzjdhcbuf.supabase.co/storage/v1/object/public/1manuelcdev-portfolio-media/hero-image.jpg')",
+          "url('https://eefsvvxawvjdzjdhcbuf.supabase.co/storage/v1/object/public/1manuelcdev-portfolio-media/hero-v3.png')",
       }}
       className="min-h-dvh flex justify-center items-center bg-cover bg-right bg-no-repeat"
     >
-      <div className="max-w-xl md:max-w-3xl w-full px-12 flex flex-col md:flex-row justify-center items-center gap-8 md:gap-4">
+      <div className="max-w-xl md:max-w-3xl w-full flex flex-col md:flex-row justify-center items-center gap-8 md:gap-4">
         <div id="bio-infos" className="flex flex-col items-center justify-start gap-4">
           <Image
             className="w-40 rounded-full"

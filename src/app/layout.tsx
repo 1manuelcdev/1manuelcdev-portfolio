@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({
-  variable: "--font-geist",
+const inter = Inter({
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -17,7 +17,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt_br" className={`${geist.className} h-full antialiased dark`}>
+    <html lang="pt_br" className={`${inter.className} h-full antialiased dark`}>
+      <head>
+        <link rel="icon" href="/favicon.svg" sizes="any" />
+      </head>
       <body className="max-w-dvw min-h-dvh flex flex-col">{children}</body>
     </html>
   );

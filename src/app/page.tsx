@@ -4,7 +4,11 @@ import { Footer } from "@/components/fragments/Footer";
 import { Header } from "@/components/fragments/Header";
 import { Hero } from "@/components/fragments/Hero";
 import { ProjectsSection } from "@/components/fragments/ProjectsSection";
-import { HeroSkeleton, ExperienceSkeleton, ProjectsSkeleton } from "@/components/fragments/skeletons";
+import {
+  HeroSkeleton,
+  ExperienceSkeleton,
+  ProjectsSkeleton,
+} from "@/components/fragments/skeletons";
 import { getFeatureFlags } from "@/lib/supabase/services/feature-flags";
 import { getHeroContent } from "@/lib/supabase/services/hero";
 import { getProjects } from "@/lib/supabase/services/projects";
