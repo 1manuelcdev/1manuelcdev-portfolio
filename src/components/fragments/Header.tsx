@@ -1,76 +1,71 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Button } from "../ui/button";
-import Image from "next/image";
+import { Menu } from "lucide-react";
+import { useRef } from "react";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 type HeaderProps = {
   flags: Record<string, boolean>;
 };
 
 export function Header({ flags }: HeaderProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [logo, setLogo] = useState("/logo.svg");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-
-    const handleLogo = () => {
-      const isMobile = window.innerWidth < 450;
-      setLogo(isMobile ? "/icon.svg" : "/logo.svg");
-    };
-
-    handleScroll();
-    handleLogo();
-
-    window.addEventListener("scroll", handleScroll);
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const selectedSection = useRef<string | null>(null);
+  const links = [
+    ...(flags.experience ? [{ href: "#experience-section", label: "Experiência" }] : []),
+    ...(flags.projects ? [{ href: "#projects-section", label: "Projetos" }] : []),
+    { href: "#skills-section", label: "Habilidades" },
+    { href: "#about-section", label: "Sobre" },
+    { href: "#contact-section", label: "Contato" },
+  ];
 
   return (
-    <header
-      className={`
-      z-1
-      flex items-center justify-between
-      fixed top-5 left-1/2 -translate-x-1/2
-      transition-all duration-400
-    ${isScrolled ? "max-w-4xl w-[84%] px-4 py-2 rounded-full ring-border ring-1 backdrop-blur-sm bg-background/70" : "px-6 w-full max-w-5xl bg-transparent"}
-  `}
-    >
-      <Link href="/" className="text-lg font-semibold">
-        <Image width={283} height={46} src={logo} className="h-4 w-fit" alt="" />
-      </Link>
-      <div className="hidden md:flex">
-        {flags.experience && (
-          <Button
-            asChild
-            variant="ghost"
-            className={`transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}`}
-          >
-            <Link href="#experience-section">Experiência</Link>
-          </Button>
-        )}
-        {flags.projects && (
-          <Button
-            asChild
-            variant="ghost"
-            className={`transition-all duration-500 delay-150 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}`}
-          >
-            <Link href="#projects-section">Projetos</Link>
-          </Button>
-        )}
-      </div>
-      <Button
-        className={`transition-all duration-500 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}`}
+    <Sheet>
+      <header className="site-header">
+        <Link href="#top" className="wordmark" aria-label="1manuelc, início">
+          <span>1manuelc</span><b>&lt;</b>
+        </Link>
+        <nav className="site-nav" aria-label="Navegação principal">
+          {links.map((link, index) => (
+            <Link className={index === 0 ? "active" : undefined} href={link.href} key={link.href}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <SheetTrigger asChild>
+          <button type="button" className="menu-toggle" aria-label="Abrir menu">
+            <Menu size={24} aria-hidden="true" />
+          </button>
+        </SheetTrigger>
+      </header>
+      <SheetContent
+        side="right"
+        aria-describedby="mobile-menu-description"
+        onCloseAutoFocus={(event) => {
+          const sectionId = selectedSection.current;
+          if (!sectionId) return;
+
+          event.preventDefault();
+          selectedSection.current = null;
+          requestAnimationFrame(() => {
+            document.getElementById(sectionId)?.focus({ preventScroll: true });
+          });
+        }}
       >
-        Contatar
-      </Button>
-    </header>
+        <SheetHeader>
+          <SheetTitle>Navegação</SheetTitle>
+          <SheetDescription id="mobile-menu-description">Acesse as seções do portfólio.</SheetDescription>
+        </SheetHeader>
+        <nav className="sheet-nav" aria-label="Navegação mobile">
+          {links.map((link) => (
+            <SheetClose asChild key={link.href}>
+              <Link href={link.href} onClick={() => { selectedSection.current = link.href.slice(1); }}>
+                {link.label}
+              </Link>
+            </SheetClose>
+          ))}
+        </nav>
+      </SheetContent>
+    </Sheet>
   );
 }
