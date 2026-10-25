@@ -1,59 +1,34 @@
 import Image from "next/image";
 import Link from "next/link";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import type { Project } from "@/lib/supabase/services/projects";
 
-type Props = {
-  projects: Project[];
-};
+type Props = { projects: Project[] };
 
 export function ProjectsSection({ projects }: Props) {
   return (
-    <div
-      id="projects-section"
-      className="px-5 py-10 border-t border-input/70 flex flex-col items-center justify-center gap-1"
-    >
-      <div id="projects-title" className="flex flex-col items-center justify-center gap-1">
-        <span className="text-xl font-semibold">Projetos pessoais</span>
-        <p className="text-muted-foreground">
-          Os melhores em meu{" "}
-          <Link
-            href={"https://github.com/1manuelcdev"}
-            className="text-accent hover:underline underline-offset-2"
-          >
-            GitHub
-          </Link>
-        </p>
+    <section id="projects-section" className="content-section" tabIndex={-1}>
+      <div className="section-heading">
+        <div>
+          <h2>Projetos</h2>
+          <p>Alguns trabalhos que transformam ideias em experiências digitais.</p>
+        </div>
+        <Link href="https://github.com/1manuelcdev" target="_blank" rel="noreferrer" className="text-link">Ver GitHub <span aria-hidden="true">↗</span></Link>
       </div>
-
-      <div
-        id="projects-content"
-        className="mt-6 w-full flex flex-wrap gap-5 items-center justify-center"
-      >
-        {projects.map((proj) => {
-          const image = proj.cover_url || "/frame.jpg";
-          return (
-            <Card key={proj.id} className="h-full max-w-80 hover:bg-muted/50 transition-colors">
-              <Link href={proj.project_url || "#"} target="_blank">
-                <CardContent className="text-muted-foreground mb-4">
-                  <Image
-                    className="w-full max-h-45 object-cover rounded-md"
-                    src={image}
-                    height={600}
-                    width={800}
-                    alt="project image"
-                  />
-                </CardContent>
-                <CardHeader>
-                  <CardTitle>{proj.title}</CardTitle>
-                  <CardDescription>{proj.description}</CardDescription>
-                </CardHeader>
-              </Link>
-            </Card>
-          );
-        })}
+      <div className="projects-grid">
+        {projects.map((project) => (
+          <article key={project.id} className="surface-card project-card">
+            <Link href={project.project_url || "#projects-section"} target={project.project_url ? "_blank" : undefined} rel={project.project_url ? "noreferrer" : undefined}>
+              <div className="project-image-wrap">
+                <Image src={project.cover_url || "/frame.jpg"} alt={project.title} width={800} height={520} className="project-image" />
+              </div>
+              <div className="project-copy">
+                <h3>{project.title}</h3>
+                <p>{project.description}</p>
+              </div>
+            </Link>
+          </article>
+        ))}
       </div>
-    </div>
+    </section>
   );
 }
