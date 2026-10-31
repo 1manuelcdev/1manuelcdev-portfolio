@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import posthog from "posthog-js";
 import {
   Field,
   FieldContent,
@@ -33,11 +34,17 @@ const flagLabels: Record<string, { title: string; description: string }> = {
 export function FeatureFlagsCard({ flags }: Props) {
   const [localFlags, setLocalFlags] = useState(flags);
   const [isPending, startTransition] = useTransition();
+  const isPostHogConfigured =
+    Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) &&
+    Boolean(process.env.NEXT_PUBLIC_POSTHOG_HOST);
 
   function handleToggle(name: string, checked: boolean) {
     setLocalFlags((prev) => ({ ...prev, [name]: checked }));
     startTransition(async () => {
       await toggleFlag(name, checked);
+      if (isPostHogConfigured) {
+        posthog.capture("feature_flag_toggled", { section: name, enabled: checked });
+      }
     });
   }
 

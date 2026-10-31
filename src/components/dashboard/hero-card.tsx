@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
+import posthog from "posthog-js";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,10 +29,20 @@ export function HeroCard({ content }: Props) {
     },
   });
   const [isPending, startTransition] = useTransition();
+  const isPostHogConfigured =
+    Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) &&
+    Boolean(process.env.NEXT_PUBLIC_POSTHOG_HOST);
 
   function onSubmit(data: HeroInput) {
     startTransition(async () => {
       await saveHeroContent(data);
+      if (isPostHogConfigured) {
+        posthog.capture("hero_content_saved", {
+          has_github_url: Boolean(data.github_url),
+          has_linkedin_url: Boolean(data.linkedin_url),
+          has_instagram_url: Boolean(data.instagram_url),
+        });
+      }
     });
   }
 

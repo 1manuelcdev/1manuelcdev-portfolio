@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import posthog from "posthog-js";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   DndContext,
@@ -115,6 +116,9 @@ export function ProjectsCard({ projects: initial }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const isPostHogConfigured =
+    Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) &&
+    Boolean(process.env.NEXT_PUBLIC_POSTHOG_HOST);
   const [inputValue, setInputValue] = useState("");
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProjectInput>({
@@ -231,9 +235,23 @@ export function ProjectsCard({ projects: initial }: Props) {
         setProjects((prev) =>
           prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p)),
         );
+        if (isPostHogConfigured) {
+          posthog.capture("project_updated", {
+            has_cover_image: Boolean(payload.cover_url),
+            has_project_url: Boolean(payload.project_url),
+            stack_count: payload.stack.length,
+          });
+        }
       } else {
         const created = await addProject(payload);
         setProjects((prev) => [...prev, created]);
+        if (isPostHogConfigured) {
+          posthog.capture("project_created", {
+            has_cover_image: Boolean(payload.cover_url),
+            has_project_url: Boolean(payload.project_url),
+            stack_count: payload.stack.length,
+          });
+        }
       }
       setOpen(false);
     });
@@ -243,6 +261,9 @@ export function ProjectsCard({ projects: initial }: Props) {
     startTransition(async () => {
       await removeProject(id);
       setProjects((prev) => prev.filter((p) => p.id !== id));
+      if (isPostHogConfigured) {
+        posthog.capture("project_deleted");
+      }
     });
   }
 

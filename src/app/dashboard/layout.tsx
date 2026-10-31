@@ -12,10 +12,14 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
 
-  if (!data?.claims) {
+  if (typeof userId !== "string") {
     redirect("/auth/login");
   }
+
+  const email =
+    typeof data?.claims?.email === "string" ? data.claims.email : undefined;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -29,7 +33,7 @@ export default async function DashboardLayout({
             <Button asChild variant="ghost" size="sm">
               <Link href="/">Ver site</Link>
             </Button>
-            <LogoutButton />
+            <LogoutButton userId={userId} email={email} />
           </div>
         </div>
       </header>
