@@ -2,6 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import {
+  flushPostHogLogs,
+  logDashboardMutation,
+  type DashboardMutation,
+} from "@/instrumentation";
 import { createClient } from "@/lib/supabase/server";
 import { getFeatureFlags } from "@/lib/supabase/services/feature-flags";
 import {
@@ -27,6 +33,11 @@ export async function fetchFeatureFlags() {
   return getFeatureFlags();
 }
 
+function recordDashboardMutation(action: DashboardMutation) {
+  logDashboardMutation(action);
+  after(flushPostHogLogs);
+}
+
 export async function toggleFlag(name: string, enabled: boolean) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -34,6 +45,7 @@ export async function toggleFlag(name: string, enabled: boolean) {
     .update({ enabled })
     .eq("name", name);
   if (error) throw error;
+  recordDashboardMutation("feature_flag_toggled");
   revalidatePath("/dashboard");
   revalidatePath("/");
 }
@@ -47,6 +59,7 @@ export async function saveHeroContent(
 ) {
   const supabase = await createClient();
   await updateHeroContent(content, supabase);
+  recordDashboardMutation("hero_content_saved");
   revalidatePath("/dashboard");
 }
 
@@ -57,6 +70,7 @@ export async function fetchProjects() {
 export async function addProject(project: Omit<Project, "id">): Promise<Project> {
   const supabase = await createClient();
   const created = await createProject(project, supabase);
+  recordDashboardMutation("project_created");
   revalidatePath("/dashboard");
   return created;
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import posthog from "posthog-js";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -24,11 +25,24 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
+      if (!data.user) throw new Error("Login succeeded without a user");
+
+      if (
+        process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+        process.env.NEXT_PUBLIC_POSTHOG_HOST
+      ) {
+        posthog.identify(
+          data.user.id,
+          data.user.email ? { email: data.user.email } : undefined
+        );
+        posthog.capture("user_logged_in");
+      }
+
       // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push("/dashboard");
     } catch (error: unknown) {

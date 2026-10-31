@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
+import posthog from "posthog-js";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -142,6 +143,9 @@ export function ExperienceCard({ experiences: initial }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const isPostHogConfigured =
+    Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) &&
+    Boolean(process.env.NEXT_PUBLIC_POSTHOG_HOST);
 
   const {
     register,
@@ -222,9 +226,15 @@ export function ExperienceCard({ experiences: initial }: Props) {
           setExperiences((prev) =>
             prev.map((e) => (e.id === editingId ? { ...e, ...payload } : e)),
           );
+          if (isPostHogConfigured) {
+            posthog.capture("experience_updated", { is_current: payload.is_current });
+          }
         } else {
           const created = await addExperience(payload);
           setExperiences((prev) => [...prev, created]);
+          if (isPostHogConfigured) {
+            posthog.capture("experience_created", { is_current: payload.is_current });
+          }
         }
         toast.success("Salvo com sucesso!", { id: toastId });
         setOpen(false);
@@ -240,6 +250,9 @@ export function ExperienceCard({ experiences: initial }: Props) {
       try {
         await removeExperience(id);
         setExperiences((prev) => prev.filter((e) => e.id !== id));
+        if (isPostHogConfigured) {
+          posthog.capture("experience_deleted");
+        }
         toast.success("Removido!", { id: toastId });
       } catch {
         toast.error("Erro ao remover", { id: toastId });
@@ -262,6 +275,9 @@ export function ExperienceCard({ experiences: initial }: Props) {
     startTransition(async () => {
       try {
         await Promise.all(reordered.map((e, i) => editExperience(e.id, { sort_order: i })));
+        if (isPostHogConfigured) {
+          posthog.capture("experience_reordered", { experience_count: reordered.length });
+        }
         toast.success("Ordem atualizada!", { id: toastId });
       } catch {
         setExperiences(experiences);
